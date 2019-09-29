@@ -3,14 +3,14 @@ import 'dotenv/config';
 import express from 'express';
 import { ApolloServer } from 'apollo-server-express';
 import { buildSchema } from 'type-graphql';
-import { UserResolver } from './UserResolver';
 import { createConnection } from 'typeorm';
 import cookieParser from 'cookie-parser';
 import { verify } from 'jsonwebtoken';
 import cors from 'cors';
 import { User } from './entity/User';
-import { createAccessToken, createRefreshToken } from './auth';
-import { sendRefreshToken } from './sendRefreshToken';
+import { createAccessToken, createRefreshToken } from './utils/auth';
+import { sendRefreshToken } from './utils/sendRefreshToken';
+import { UserResolver } from './modules/user/UserResolver';
 
 (async () => {
 	const app = express();
@@ -57,6 +57,7 @@ import { sendRefreshToken } from './sendRefreshToken';
 
 	const apolloServer = new ApolloServer({
 		schema: await buildSchema({
+			//resolvers: [__dirname + '/modules/**/*resolver.ts']
 			resolvers: [UserResolver]
 		}),
 		context: ({ req, res }) => ({ req, res })

@@ -1,31 +1,22 @@
+import { isAuth } from './../../isAuth';
+import { createAccessToken } from './../../utils/auth';
+import { sendRefreshToken } from './../../utils/sendRefreshToken';
+import { createRefreshToken } from './../../utils/auth';
+import { LoginResponse } from './../../types/LoginResponse';
 import {
 	Resolver,
-	Query,
 	Mutation,
 	Arg,
-	ObjectType,
-	Field,
+	Query,
 	Ctx,
-	UseMiddleware,
-	Int
+	Int,
+	UseMiddleware
 } from 'type-graphql';
-import { User } from './entity/User';
 import { hash, compare } from 'bcryptjs';
-import { MyContext } from './MyContext';
-import { createAccessToken, createRefreshToken } from './auth';
-import { isAuth } from './isAuth';
-import { sendRefreshToken } from './sendRefreshToken';
-import { getConnection } from 'typeorm';
+import { User } from '../../entity/User';
 import { verify } from 'jsonwebtoken';
-
-@ObjectType()
-class LoginResponse {
-	@Field()
-	accessToken: string;
-
-	@Field(() => User)
-	user: User;
-}
+import { MyContext } from '../../types/MyContext';
+import { getConnection } from 'typeorm';
 
 @Resolver()
 export class UserResolver {
@@ -39,6 +30,15 @@ export class UserResolver {
 	bye(@Ctx() { payload }: MyContext) {
 		console.log(payload);
 		return `your user id is : ${payload!.userId}`;
+	}
+
+	@Mutation(() => Boolean)
+	async revokeRefreshTokensForUser(@Arg('userId', () => Int) userId: number) {
+		await getConnection()
+			.getRepository(User)
+			.increment({ id: userId }, 'tokenVersion', 1);
+
+		return true;
 	}
 
 	@Query(() => [User])
@@ -65,19 +65,26 @@ export class UserResolver {
 		}
 	}
 
-	@Mutation(() => Boolean)
-	async logout(@Ctx() { res }: MyContext) {
-		sendRefreshToken(res, '');
-		return true;
-	}
+	@Mutation(() => User)
+	async register(
+		@Arg('email') email: string,
+		@Arg('password') password: string,
+		@Arg('firstName') firstName: string,
+		@Arg('lastName') lastName: string
+	): Promise<User> {
+		const hashedPassword = await hash(password, 12);
+		const user = User.create({
+			firstName,
+			lastName,
+			email,
+			password: hashedPassword
+		}).save();
 
-	@Mutation(() => Boolean)
-	async revokeRefreshTokensForUser(@Arg('userId', () => Int) userId: number) {
-		await getConnection()
-			.getRepository(User)
-			.increment({ id: userId }, 'tokenVersion', 1);
+		if (!user) {
+			throw new Error('Register failed.');
+		}
 
-		return true;
+		return user;
 	}
 
 	@Mutation(() => LoginResponse)
@@ -105,22 +112,8 @@ export class UserResolver {
 	}
 
 	@Mutation(() => Boolean)
-	async register(
-		@Arg('email') email: string,
-		@Arg('password') password: string
-	) {
-		const hashedPassword = await hash(password, 12);
-
-		try {
-			await User.insert({
-				email,
-				password: hashedPassword
-			});
-		} catch (err) {
-			console.log(err);
-			return false;
-		}
-
+	async logout(@Ctx() { res }: MyContext) {
+		sendRefreshToken(res, '');
 		return true;
 	}
 }
