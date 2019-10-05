@@ -3,6 +3,7 @@
 	"version": "0.0.1",
 	"description": "Awesome project developed with TypeORM.",
 	"devDependencies": {
+		"@types/": "sindresorhus/slugify",
 		"@types/bcryptjs": "^2.4.2",
 		"@types/cookie-parser": "^1.4.2",
 		"@types/cors": "^2.8.6",
@@ -15,6 +16,7 @@
 		"typescript": "3.6.3"
 	},
 	"dependencies": {
+		"@sindresorhus/slugify": "^0.9.1",
 		"apollo-server-express": "^2.9.3",
 		"bcryptjs": "^2.4.3",
 		"cookie-parser": "^1.4.4",

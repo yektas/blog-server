@@ -10,7 +10,7 @@ import cors from 'cors';
 import { User } from './entity/User';
 import { createAccessToken, createRefreshToken } from './utils/auth';
 import { sendRefreshToken } from './utils/sendRefreshToken';
-import { UserResolver } from './modules/user/UserResolver';
+//import { UserResolver } from './modules/user/UserResolver';
 
 (async () => {
 	const app = express();
@@ -57,8 +57,8 @@ import { UserResolver } from './modules/user/UserResolver';
 
 	const apolloServer = new ApolloServer({
 		schema: await buildSchema({
-			//resolvers: [__dirname + '/modules/**/*resolver.ts']
-			resolvers: [UserResolver]
+			resolvers: [__dirname + '/modules/**/*Resolver.ts']
+			//resolvers: [UserResolver]
 		}),
 		context: ({ req, res }) => ({ req, res })
 	});
