@@ -1,22 +1,14 @@
-import { isAuth } from './../../isAuth';
-import { createAccessToken } from './../../utils/auth';
-import { sendRefreshToken } from './../../utils/sendRefreshToken';
-import { createRefreshToken } from './../../utils/auth';
-import { LoginResponse } from './../../types/LoginResponse';
-import {
-	Resolver,
-	Mutation,
-	Arg,
-	Query,
-	Ctx,
-	Int,
-	UseMiddleware
-} from 'type-graphql';
-import { hash, compare } from 'bcryptjs';
-import { User } from '../../entity/User';
+import { compare, hash } from 'bcryptjs';
 import { verify } from 'jsonwebtoken';
-import { MyContext } from '../../types/MyContext';
+import { Arg, Ctx, Int, Mutation, Query, Resolver, UseMiddleware } from 'type-graphql';
 import { getConnection } from 'typeorm';
+
+import { User } from '../../entity/User';
+import { MyContext } from '../../types/MyContext';
+import { isAuth } from './../../isAuth';
+import { LoginResponse } from './../../types/LoginResponse';
+import { createAccessToken, createRefreshToken } from './../../utils/auth';
+import { sendRefreshToken } from './../../utils/sendRefreshToken';
 
 @Resolver()
 export class UserResolver {
@@ -42,6 +34,7 @@ export class UserResolver {
 	}
 
 	@Query(() => [User])
+	@UseMiddleware(isAuth)
 	users() {
 		return User.find();
 	}
@@ -69,8 +62,8 @@ export class UserResolver {
 	async register(
 		@Arg('email') email: string,
 		@Arg('password') password: string,
-		@Arg('firstName') firstName: string,
-		@Arg('lastName') lastName: string
+		@Arg('firstName', { nullable: true }) firstName?: string,
+		@Arg('lastName', { nullable: true }) lastName?: string
 	): Promise<User> {
 		const hashedPassword = await hash(password, 12);
 		const user = User.create({
