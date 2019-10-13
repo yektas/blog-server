@@ -4,15 +4,17 @@ import {
 	Column,
 	BaseEntity,
 	ManyToOne,
-	ManyToMany,
 	CreateDateColumn,
 	UpdateDateColumn,
-	JoinTable
+	JoinTable,
+	ManyToMany,
+	JoinColumn
 } from 'typeorm';
 import { ObjectType, Field, Int } from 'type-graphql';
 import { User } from './User';
 import { Category } from './Category';
 import { Tag } from './Tag';
+// import slugify from '@sindresorhus/slugify';
 
 @ObjectType()
 @Entity('post')
@@ -25,12 +27,18 @@ export class Post extends BaseEntity {
 	@Column({ length: 150 })
 	title: string;
 
+	@Column()
+	authorId: number;
 	@Field(() => User)
-	@ManyToOne(() => User, (author) => author.posts)
+	@ManyToOne(() => User, (author: User) => author.posts)
+	@JoinColumn({ name: 'authorId' })
 	author: User;
 
+	@Column()
+	categoryId: number;
 	@Field(() => Category)
-	@ManyToOne(() => Category, (category) => category.posts)
+	@ManyToOne(() => Category, (category: Category) => category.post)
+	@JoinColumn({ name: 'categoryId' })
 	category: Category;
 
 	@Field(() => [Tag])
@@ -40,14 +48,14 @@ export class Post extends BaseEntity {
 
 	@Field()
 	@Column({ nullable: true })
-	excerpt: string;
+	excerpt?: string;
 
 	@Field()
-	@Column({ readonly: true })
-	slug: string;
+	@Column({ readonly: true, nullable: true })
+	slug?: string;
 
 	@Field()
-	@Column({ nullable: true })
+	@Column()
 	image: string;
 
 	@Field()
@@ -69,4 +77,10 @@ export class Post extends BaseEntity {
 	@Field()
 	@Column({ name: 'read_time', default: 0 })
 	readTime: number;
+
+	// @AfterInsert()
+	// slugifyTitle() {
+	// 	const slug = slugify(this.title);
+	// 	this.slug = slug.concat('-' + String(this.id));
+	// }
 }

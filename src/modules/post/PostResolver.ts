@@ -1,4 +1,4 @@
-import { Arg, Args, Ctx, Mutation, Query, Resolver, UseMiddleware } from 'type-graphql';
+import { Arg, Args, Mutation, Query, Resolver, UseMiddleware, Ctx } from 'type-graphql';
 
 import { Category } from './../../entity/Category';
 import { Post } from './../../entity/Post';
@@ -10,13 +10,14 @@ import { CreatePostArguments } from './PostArguments';
 @Resolver()
 export class PostResolver {
 	@Query(() => [Post])
-	posts() {
-		return Post.find();
+	async posts() {
+		const posts = await Post.find({ relations: ['author', 'category', 'tags'] });
+		return posts;
 	}
 
 	@Query(() => Post)
 	async getPost(@Arg('id') id: number) {
-		const post = await Post.findOne({ where: { id } });
+		const post = await Post.findOne({ where: { id }, relations: ['author', 'category', 'tags'] });
 
 		if (!post) {
 			throw new Error(`Post with id ${id} not found`);
@@ -27,7 +28,7 @@ export class PostResolver {
 
 	@Mutation(() => Post)
 	@UseMiddleware(isAuth)
-	async createPost(@Args() newPost: CreatePostArguments, @Ctx() { payload }: MyContext) {
+	async createPost(@Ctx() { payload }: MyContext, @Args() newPost: CreatePostArguments) {
 		const category = await Category.findOne({
 			where: { id: newPost.categoryId }
 		});
@@ -37,18 +38,28 @@ export class PostResolver {
 		}
 
 		const author = await User.findOne({ where: { id: payload!.userId } });
-		const post = await Post.create({
-			title: newPost.title,
-			category,
-			excerpt: newPost.excerpt,
-			image: newPost.coverImage,
-			content: newPost.content,
-			author: author
-		}).save();
 
-		if (!post) {
+		if (!author) {
+			throw new Error('Author user does not exists');
+		}
+
+		const post = await Post.getRepository()
+			.create({
+				title: newPost.title,
+				categoryId: category.id,
+				authorId: author.id,
+				excerpt: newPost.excerpt,
+				image: newPost.coverImage,
+				content: newPost.content
+			})
+			.save();
+
+		const newlySavedPost = await Post.getRepository().findOne({ id: post.id });
+		console.log('Post created');
+		console.log(newlySavedPost);
+		if (!newlySavedPost) {
 			throw new Error('Post creation failed');
 		}
-		return post;
+		return newlySavedPost;
 	}
 }

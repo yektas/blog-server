@@ -34,7 +34,7 @@ export class UserResolver {
 	}
 
 	@Query(() => [User])
-	@UseMiddleware(isAuth)
+	//@UseMiddleware(isAuth)
 	users() {
 		return User.find();
 	}
