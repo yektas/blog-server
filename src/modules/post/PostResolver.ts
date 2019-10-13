@@ -43,7 +43,7 @@ export class PostResolver {
 			throw new Error('Author user does not exists');
 		}
 
-		const post = await Post.getRepository()
+		return await Post.getRepository()
 			.create({
 				title: newPost.title,
 				categoryId: category.id,
@@ -53,13 +53,5 @@ export class PostResolver {
 				content: newPost.content
 			})
 			.save();
-
-		const newlySavedPost = await Post.getRepository().findOne({ id: post.id });
-		console.log('Post created');
-		console.log(newlySavedPost);
-		if (!newlySavedPost) {
-			throw new Error('Post creation failed');
-		}
-		return newlySavedPost;
 	}
 }

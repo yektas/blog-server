@@ -1,3 +1,4 @@
+import slugify from '@sindresorhus/slugify';
 import { Post } from './../entity/Post';
 import { EventSubscriber, EntitySubscriberInterface, InsertEvent } from 'typeorm';
 
@@ -11,16 +12,8 @@ export class PostSubscriber implements EntitySubscriberInterface<Post> {
 	}
 
 	async afterInsert(event: InsertEvent<Post>) {
-		console.log('AfterInsert started');
 		const newPost = event.entity;
-
-		const post = await event.manager.getRepository(Post).findOne(newPost.id);
-		if (post) {
-			post.slug = 'Halo-slug';
-			await event.manager.getRepository(Post).save(newPost);
-			const myPost = await event.manager.getRepository(Post).findOne(post.id);
-			console.log(myPost);
-		}
-		console.log('AfterInsert finished');
+		newPost.slug = slugify(newPost.title.concat('-' + newPost.id));
+		await event.manager.getRepository(Post).save(newPost);
 	}
 }

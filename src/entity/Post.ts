@@ -14,7 +14,6 @@ import { ObjectType, Field, Int } from 'type-graphql';
 import { User } from './User';
 import { Category } from './Category';
 import { Tag } from './Tag';
-// import slugify from '@sindresorhus/slugify';
 
 @ObjectType()
 @Entity('post')
@@ -51,7 +50,7 @@ export class Post extends BaseEntity {
 	excerpt?: string;
 
 	@Field()
-	@Column({ readonly: true, nullable: true })
+	@Column({ nullable: true })
 	slug?: string;
 
 	@Field()
